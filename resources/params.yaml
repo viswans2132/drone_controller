@@ -1,4 +1,4 @@
-actuator_enabled: false
+actuator_enabled: true
 drone: {
   mass: "1.0, 0.02, 0.02, 0.04"
 }
