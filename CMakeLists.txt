@@ -31,8 +31,15 @@ add_library(pid_controller
   src/libs/pid_controller.cpp
 )
 
+add_library(asm_controller
+  src/libs/asm_controller.cpp
+)
+
 target_link_libraries(pid_controller ${catkin_LIBRARIES})
 add_dependencies(pid_controller ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(asm_controller ${catkin_LIBRARIES})
+add_dependencies(asm_controller ${catkin_EXPORTED_TARGETS})
 
 
 add_executable(pid_node src/nodes/pid_node.cpp)
@@ -40,11 +47,16 @@ add_dependencies(pid_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pid_node
   pid_controller ${catkin_LIBRARIES})
 
-install(TARGETS pid_controller
+add_executable(asm_node src/nodes/asm_node.cpp)
+add_dependencies(asm_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(asm_node
+  asm_controller ${catkin_LIBRARIES})
+
+install(TARGETS pid_controller asm_controller
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(TARGETS pid_node  
+install(TARGETS pid_node asm_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

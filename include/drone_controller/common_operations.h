@@ -88,6 +88,18 @@ namespace drone_controller{
 		uint64_t timestamp_ns;
 	};
 
+
+	template<typename T> inline void GetParameter(const ros::NodeHandle& nh, T* value, 
+		const std::string& key, const T& def_value){
+		ROS_ASSERT(value != nullptr);
+		bool have_parameter = nh.getParam(key, *value);
+		if (!have_parameter) {
+		ROS_WARN_STREAM("[rosparam]: could not find parameter " << nh.getNamespace()
+		                << "/" << key << ", setting to default: " << def_value);
+		*value = def_value;
+		}
+	}
+
 	template<typename T> inline void GetParameterArray(const ros::NodeHandle& nh, T* value, 
 		const std::string& key, const T& def_value){
 		ROS_ASSERT(value != nullptr);
@@ -95,7 +107,7 @@ namespace drone_controller{
 
 		std::string str;
 		std::vector<std::string> values;
-		bool have_parameter = nh.getParam (key, str);
+		bool have_parameter = nh.getParam(key, str);
 		if (!have_parameter) {
 			ROS_WARN_STREAM("[rosparam]: could not find parameter " << nh.getNamespace()
 			                << "/" << key << ", setting to default: " << def_value);
@@ -124,8 +136,6 @@ namespace drone_controller{
 		}
 	}
 
-
-
 	inline void GetRotorConfig(const ros::NodeHandle& nh,
 	                          RotorConfiguration* rotor_configuration) {
 		std::map<std::string, double> single_rotor;
@@ -151,6 +161,10 @@ namespace drone_controller{
 			ROS_INFO_STREAM("Rotor: "<< i);
 		}
 		ROS_INFO_STREAM("rotor_configuration done: " << rotor_configuration->rotors.size());
+	}
+
+	inline double signumFn(double s, double var_pi) {
+		return ((abs(s) > var_pi) ? s/abs(s) : s/var_pi);
 	}
 
 	inline void desAttFromForces(const Eigen::Vector3d forces, double yaw, Eigen::Matrix3d* des_att) {		
