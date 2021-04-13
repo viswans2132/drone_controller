@@ -1,0 +1,33 @@
+<package>
+  <name>drone_controller</name>
+  <version>1.0.1</version>
+  <description>Controller to work with RotorS and mavros packages</description>
+
+  <maintainer email="viswans2132@gmail.com">Viswa Narayanan S.</maintainer>
+
+  <author>Viswa Narayanan S.</author>
+
+  <license>RRC</license>
+
+  <url type="website">https://github.com/viswans2132/drone_controller</url>
+  <url type="bugtracker">https://github.com/viswans2132/drone_controller/issues</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>mav_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>cmake_modules</build_depend>
+
+
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>mav_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+
+
+</package>
