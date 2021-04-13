@@ -31,19 +31,8 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)"/>
     </include>
-      <!-- <arg name="mav_name" value="box" /> -->
-      <!-- <arg name="model" value="$(find rotors_description)/urdf/mav_generic_odometry_sensor.gazebo" /> -->
-      <!-- <arg name="enable_logging" value="$(arg enable_logging)" /> -->
-      <!-- <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" /> -->
-      <!-- <arg name="log_file" value="$(arg log_file)"/> -->
-    <!-- </include> -->
-    <!-- <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="screen">
-      <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
-      <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
-      <remap from="odometry" to="odometry_sensor1/odometry" />
-    </node>   -->
+
     <node name="controller_node" pkg="drone_controller" type="pid_node" output="screen">
-      <!-- <rosparam command="load" file="$(find rotors_gazebo)/resource/asmc_$(arg mav_name).yaml" /> -->
       <rosparam command="load" file="$(find drone_controller)/resources/params.yaml" />
       <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
       <remap from="odom_msg" to="odometry_sensor1/odometry" />
@@ -53,28 +42,6 @@
     <node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen"/>
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
-   <!-- <node pkg="tf" type="static_transform_publisher" name="ime_slam_camera_tf" args="0.2 0.0 0.05 -1.58 0 -1.58 /iris/base_link /iris/kinect_link_optical 100"/> -->
-    <!--<node type="laser_scan_assembler" pkg="laser_assembler"
-          name="laser_assembler">
-      <remap from="scan" to="/scan"/>
-      <param name="max_scans" type="int" value="400" />
-      <param name="fixed_frame" type="string" value="/world" />
-    </node>
-
-    <node pkg="rotors_control" type="periodic_snapshotter" output="screen" name="periodic_snapshotter" /> -->
-<!-- 
-   <node pkg="rotors_control" type="pcl_pcl2" name="pcl_boy" output="screen"/>
-   -->
-   <!-- <node pkg="path_planning" type="goal_transform" name="goal" output="screen"/> -->
-   <!-- <node pkg="path_planning" type="path_planning_node" name="path" output="screen"/> -->
-   <!-- <node pkg="mav_trajectory_generation_ros" type="tg_new" name="tgen" output="screen"/> -->
- 
-
-    <!-- Convert xacro and put on parameter server -->
-    <!-- <param name="robot_description" command="$(find xacro)/xacro.py $(find rotors_description)/urdf/box.xacro" namespace="$(arg mav_name)"/> -->
-
-    <!-- Spawn a robot into Gazebo -->
-    <!-- <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model robot" /> -->
 
   </group>
 
