@@ -9,6 +9,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/Point.h>
 
 
 
@@ -171,6 +172,26 @@ namespace drone_controller{
 		des_att->col(2) = b3_des;
 	}
 
+	inline void genHomePose(const Eigen::Vector3d& point, geometry_msgs::Pose* pose){
+		pose->position.x = point[0];
+		pose->position.y = point[1];
+		pose->position.z = point[2];
+
+		pose->orientation.x = 0;
+		pose->orientation.y = 0;
+		pose->orientation.z = 0;
+		pose->orientation.w = 1;
+	}
+
+
+	template <class T> void waitForPredicate(const T *pred, const std::string &msg, double hz = 2.0) {
+		ros::Rate pause(hz);
+		ROS_INFO_STREAM(msg);
+		while (ros::ok() && !(*pred)) {
+			ros::spinOnce();
+			pause.sleep();
+		}
+	}
 
 
 	inline void eigenOdometryFromMsg(const nav_msgs::OdometryConstPtr& msg,

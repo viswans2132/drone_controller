@@ -12,14 +12,23 @@ namespace drone_controller{
                             &PidNode::OdomCallback, this);
 		traj_sub_ = nh_.subscribe("traj_msg", 1, 
                             &PidNode::TrajCallback, this);
-        rpm_pub_ = nh_.advertise<mav_msgs::Actuators>(
-			mav_msgs::default_topics::COMMAND_ACTUATORS, 1);
+		mavState_sub_ = nh_.subscribe("mavros/state", 1, 
+							&PidNode::MavStateCallback, this, ros::TransportHints().tcpNoDelay());
+
         pub_timer_ = nh_.createTimer(ros::Duration(0.01), &PidNode::PubCallback, this,
 			false);
         com_timer_ = nh_.createTimer(ros::Duration(0), &PidNode::ComCallback, this,
 			true, false);
-        att_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_attitude/attitude",100);
-        thr_pub_ = nh_.advertise<mavros_msgs::Thrust>("/mavros/setpoint_attitude/thrust", 100);
+        sts_timer_ = nh_.createTimer(ros::Duration(0), &PidNode::StsCallback, this, false);
+        mavCom_timer_ = nh_.createTimer(ros::Duration(0), &PidNode::MavComCallback, this, false);
+
+        rpm_pub_ = nh_.advertise<mav_msgs::Actuators>(
+			mav_msgs::default_topics::COMMAND_ACTUATORS, 1);
+        tgt_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10);
+        att_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("/attitude_msg",100);
+        thr_pub_ = nh_.advertise<mavros_msgs::Thrust>("/thrust_msg", 100);
+
+        genHomePose(Eigen::Vector3d(0,0,0), &home_pose_.pose);
 	}
 
 	PidNode::~PidNode() {}
@@ -36,12 +45,15 @@ namespace drone_controller{
 
 		position_controller_.initParams();
 		pub_timer_.start();
+		mavCom_timer_.start();
+		sts_timer_.start();
 	}
 
 	void PidNode::PoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg){
 		EigenOdometry odometry;
 		eigenOdometryFromPoseMsg(msg, &odometry);
 		position_controller_.setOdometry(odometry);
+		home_pose_.pose.position = msg->pose.pose.position;
 	}
 
 	void PidNode::OdomCallback(const nav_msgs::OdometryConstPtr& msg){
@@ -132,7 +144,61 @@ namespace drone_controller{
 	  	// plot_data_pub_.publish(data_out_);
 	}
 
+	void PidNode::StsCallback(const ros::TimerEvent &e){
+		// Enable OFFBoard mode and arm automatically
+		// This is only run if the vehicle is simulated
+		arm_cmd_.request.value = true;
+		offb_set_mode_.request.custom_mode = "OFFBOARD";
+		if (current_state_.mode != "OFFBOARD" && (ros::Time::now() - last_request_ > ros::Duration(5.0))) {
+			if (set_mode_client_.call(offb_set_mode_) && offb_set_mode_.response.mode_sent) {
+				ROS_INFO("Offboard enabled");
+			}
+			last_request_ = ros::Time::now();
+		} 
+		else {
+			if (!current_state_.armed && (ros::Time::now() - last_request_ > ros::Duration(5.0))) {
+				if (arming_client_.call(arm_cmd_) && arm_cmd_.response.success) {
+		  			ROS_INFO("Vehicle armed");
+				}
+				last_request_ = ros::Time::now();
+			}
+		}
+	}
+
+	void PidNode::MavComCallback(const ros::TimerEvent &e){
+		switch (node_state_) {
+			case WAITING_FOR_HOME_POSE:
+				waitForPredicate(&received_home_pose, "Waiting for home pose...");
+				ROS_INFO("Got pose! Drone Ready to be armed.");
+				node_state_ = MISSION_EXECUTION;
+				break;
+
+			case MISSION_EXECUTION:
+				if (!position_controller_.controller_active_){
+					position_controller_.controller_active_ = true;
+				} 
+				break;
+
+			case LANDING:
+				home_pose_.header.stamp = ros::Time::now();
+				tgt_pub_.publish(home_pose_);
+				node_state_ = LANDED;
+				ros::spinOnce();
+				break;
+			
+			case LANDED:
+				ROS_INFO("Landed. Please set to position control and disarm.");
+				mavCom_timer_.stop();
+				break;
+		}
+	}
+
+	void PidNode::MavStateCallback(const mavros_msgs::State::ConstPtr &msg) { 
+		current_state_ = *msg;
+	}
+
 }
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "pid_node");
 
