@@ -170,12 +170,13 @@ namespace drone_controller{
 		Eigen::Vector3d forces;
 		ComputeDesiredForces(&forces);
 		double thrust = forces.dot(odometry_.orientation.toRotationMatrix().col(2));
+		double throttle = std::min(std::max(0.0, thrust/max_thrust_), 1.0);
 
 		Eigen::Matrix3d R_des;
 		desAttFromForces(forces, com_traj_.getYaw(), &R_des);
 
 		Eigen::Quaterniond des_quat(R_des);
-		(*att_thrust)[0] = thrust;
+		(*att_thrust)[0] = throttle;
 		(*att_thrust)[1] = des_quat.x();
 		(*att_thrust)[2] = des_quat.y();
 		(*att_thrust)[3] = des_quat.z();

@@ -42,6 +42,7 @@ namespace drone_controller{
 
 		Eigen::Matrix4Xd allocation_matrix_;
 		RotorConfiguration rotor_config_;
+		double max_thrust_;
 		double gravity_;
 
 		bool controller_active_;

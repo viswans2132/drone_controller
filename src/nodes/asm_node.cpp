@@ -48,6 +48,7 @@ namespace drone_controller{
 		GetParameterArray(private_nh_, &position_controller_.lam_p_, "control/lam_p", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.lam_q_, "control/lam_q", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameter(private_nh_, &position_controller_.hatM_, "control/hatM", 1.0);
+		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 20.0);
 		GetParameter(private_nh_, &position_controller_.alpha_m_, "control/alpha_m", 1.0);
 		GetParameter(private_nh_, &position_controller_.var_pi_p_, "control/var_pi_p", 1.0);
 		GetParameter(private_nh_, &position_controller_.var_pi_q_, "control/var_pi_q", 1.0);
