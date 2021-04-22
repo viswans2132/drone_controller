@@ -16,7 +16,7 @@ find_package(Eigen REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include ${Eigen_INCLUDE_DIRS}
-  LIBRARIES  pid_controller asm_controller rsb_controller
+  LIBRARIES  pid_controller asm_controller rsb_controller ec_controller
   CATKIN_DEPENDS geometry_msgs mav_msgs nav_msgs roscpp sensor_msgs 
   DEPENDS Eigen
 )
@@ -39,6 +39,10 @@ add_library(rsb_controller
   src/libs/rsb_controller.cpp
 )
 
+add_library(ec_controller
+  src/libs/ec_controller.cpp
+)
+
 target_link_libraries(pid_controller ${catkin_LIBRARIES})
 add_dependencies(pid_controller ${catkin_EXPORTED_TARGETS})
 
@@ -47,6 +51,9 @@ add_dependencies(asm_controller ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(rsb_controller ${catkin_LIBRARIES})
 add_dependencies(rsb_controller ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(ec_controller ${catkin_LIBRARIES})
+add_dependencies(ec_controller ${catkin_EXPORTED_TARGETS})
 
 
 add_executable(pid_node src/nodes/pid_node.cpp)
@@ -64,11 +71,16 @@ add_dependencies(rsb_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(rsb_node
   rsb_controller ${catkin_LIBRARIES})
 
-install(TARGETS pid_controller asm_controller rsb_controller
+add_executable(ec_node src/nodes/ec_node.cpp)
+add_dependencies(ec_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(ec_node
+  ec_controller ${catkin_LIBRARIES})
+
+install(TARGETS pid_controller asm_controller rsb_controller ec_controller
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(TARGETS pid_node asm_node rsb_node
+install(TARGETS pid_node asm_node rsb_node ec_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find drone_controller)/worlds/basic.world"/>
+        <arg name="paused" value="true"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="recording" value="false"/>
+        <arg name="debug" value="false"/>
+    </include><!-- 
+    <node name="elas_position_controller" pkg="rrc_control" type="elas_smc_position_controller_node" output="screen">
+        <rosparam command="load" file="$(find rrc_control)/resources/elas_smc_pelican.yaml" />
+        <rosparam command="load" file="$(find rrc_control)/resources/reconfig_pelican_sim.yaml" />
+        <remap from="odometry" to="/elasticopter/odometry_sensor1/odometry" /> 
+    </node> -->
+
+</launch>

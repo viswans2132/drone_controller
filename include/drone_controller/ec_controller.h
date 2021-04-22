@@ -1,5 +1,5 @@
-#ifndef DRONE_CONTROLLER_PID_CONTROLLER_H_
-#define DRONE_CONTROLLER_PID_CONTROLLER_H_
+#ifndef DRONE_CONTROLLER_EC_CONTROLLER_H_
+#define DRONE_CONTROLLER_EC_CONTROLLER_H_
 
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
@@ -8,20 +8,26 @@
 #include "drone_controller/common_operations.h"
 
 namespace drone_controller{
-	class PidController{
+	class EcController{
 	public:
-		PidController();
-		~PidController();
+		EcController();
+		~EcController();
 		void initParams();
-		void getRPMs(Eigen::VectorXd* rpms) const;
-		void getAttThrust(Eigen::VectorXd* att_thrust) const;
+		void getRPMs(Eigen::VectorXd* rpms) ;
+		void getAttThrust(Eigen::VectorXd* att_thrust);
 		void setTraj(const mav_msgs::EigenTrajectoryPoint& com_traj);
 		// void setOdometryFromPose(const geometric_msgs::Pose& pose);
 		void setOdometry(const EigenOdometry& odom);
 
-		Eigen::Vector3d Kp_p_;
-		Eigen::Vector3d Kv_p_;
-		Eigen::Vector3d Ki_p_;
+		Eigen::Vector3d rho_0a_p_;
+		Eigen::Vector3d rho_0b_p_;
+		Eigen::Vector3d rho_ssa_p_;
+		Eigen::Vector3d rho_ssb_p_;
+		Eigen::Vector3d lam_p_;
+		Eigen::Vector3d eHat_p_;
+		double alpha_a_p_;
+		double alpha_b_p_;
+		double var_pi_p_;
 		Eigen::Vector3d Kp_q_;
 		Eigen::Vector3d Kv_q_;
 		Eigen::Vector4d mass_inertia_;
@@ -44,8 +50,8 @@ namespace drone_controller{
 
 
 		void ComputeDesiredAngularAcc(const Eigen::Vector3d& forces,
-		                            Eigen::Vector3d* angular_acceleration) const;
-		void ComputeDesiredForces(Eigen::Vector3d* forces) const;
+		                            Eigen::Vector3d* angular_acceleration);
+		void ComputeDesiredForces(Eigen::Vector3d* forces) ;
 
 	};
 
