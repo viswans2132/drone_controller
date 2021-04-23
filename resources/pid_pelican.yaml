@@ -1,0 +1,15 @@
+actuator_enabled: true
+drone: {
+  mass_inertia: "1.0, 0.01, 0.01, 0.02"
+}
+
+control: {
+  Kp_p: "4.0, 4.0, 4.0",
+  Kv_p: "2.7, 2.7, 2.7",
+  Ki_p: "0.2, 0.2, 0.5",
+
+  Kp_q: "1.0, 1.0, 0.03",
+  Kv_q: "0.22, 0.22, 0.01",
+
+  max_thrust: 20.0
+}

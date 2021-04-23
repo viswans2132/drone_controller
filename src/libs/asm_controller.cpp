@@ -72,10 +72,12 @@ namespace drone_controller{
 		// static Eigen::Vector3d hatKp = controller_parameters_.hatKp_;
 		// static double hatM = controller_parameters_.hatM_;
 
-		Eigen::Vector3d dot_hatKp;
+		Eigen::Vector3d dot_hatKp0, dot_hatKp1;
 		double dot_hatM;
+		Eigen::Vector3d xi_p = position_error.cwiseAbs();
 
-		dot_hatKp = sp.cwiseAbs() - alpha_p_.cwiseProduct(hatKp_);
+		dot_hatKp0 = sp.cwiseAbs() - alpha_p0_.cwiseProduct(hatKp0_);
+		dot_hatKp1 = sp.cwiseAbs().cwiseProduct(xi_p) - alpha_p1_.cwiseProduct(hatKp1_);
 		// dot_hatM = vehicle_parameters_.gravity_*abs(sp[2]) - controller_parameters_.alpha_m_*(hatM);
 		dot_hatM = -gravity_*sp[2] - alpha_m_*(hatM_);
 
@@ -83,13 +85,19 @@ namespace drone_controller{
 		current_time = ros::Time::now();
 		double dt = (current_time - last_time).toSec();
 
-		hatKp_ += dot_hatKp*dt;
+		hatKp0_ += dot_hatKp0*dt;
+		hatKp1_ += dot_hatKp1*dt;
 		hatM_ += dot_hatM*dt;
+
+		hatM_ = std::max(0.0, hatM_);
+		hatKp0_.cwiseMax(Eigen::Vector3d::Zero());
+		// hatKp1_.cwiseMax(Eigen::Vector3d::Zero());
+		hatKp1_ << 0,0,0;
 
 		last_time = current_time;
 
 		// Eigen::Matrix3d lam_p = controller_parameters_.lam_p_.asDiagonal();
-		Eigen::Vector3d rho_p = hatKp_;
+		Eigen::Vector3d rho_p = hatKp0_ + hatKp1_.cwiseProduct(xi_p);
 
 		Eigen::Vector3d delTau_p;
 		delTau_p << rho_p[0]*signumFn(sp[0], var_pi_p_), 
@@ -146,6 +154,11 @@ namespace drone_controller{
 		hatKq0_ += dot_hatKq0*dt;
 		hatKq1_ += dot_hatKq1*dt;
 		hatKq2_ += dot_hatKq2*dt;
+
+		hatKq0_.cwiseMax(Eigen::Vector3d::Zero());
+		hatKq1_.cwiseMax(Eigen::Vector3d::Zero());
+		hatKq2_.cwiseMax(Eigen::Vector3d::Zero());
+
 
 		last_time = current_time;
 

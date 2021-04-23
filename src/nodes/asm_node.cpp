@@ -35,11 +35,13 @@ namespace drone_controller{
 
 	void AsmNode::initParams(){
 		private_nh_.getParam("actuator_enabled", actuator_enabled_);
-		GetParameterArray(private_nh_, &position_controller_.hatKp_, "control/Kp", Eigen::Vector3d(4.0, 4.0, 4.0));
+		GetParameterArray(private_nh_, &position_controller_.hatKp0_, "control/Kp0", Eigen::Vector3d(4.0, 4.0, 4.0));
+		GetParameterArray(private_nh_, &position_controller_.hatKp1_, "control/Kp1", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.hatKq0_, "control/Kq0", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.hatKq1_, "control/Kq1", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.hatKq2_, "control/Kq2", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alpha_p_, "control/alpha_p", Eigen::Vector3d(4.0, 4.0, 4.0));
+		GetParameterArray(private_nh_, &position_controller_.alpha_p0_, "control/alpha_p0", Eigen::Vector3d(4.0, 4.0, 4.0));
+		GetParameterArray(private_nh_, &position_controller_.alpha_p1_, "control/alpha_p1", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.alpha_q0_, "control/alpha_q0", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.alpha_q1_, "control/alpha_q1", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.alpha_q2_, "control/alpha_q2", Eigen::Vector3d(4.0, 4.0, 4.0));
@@ -48,7 +50,7 @@ namespace drone_controller{
 		GetParameterArray(private_nh_, &position_controller_.lam_p_, "control/lam_p", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameterArray(private_nh_, &position_controller_.lam_q_, "control/lam_q", Eigen::Vector3d(4.0, 4.0, 4.0));
 		GetParameter(private_nh_, &position_controller_.hatM_, "control/hatM", 1.0);
-		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 20.0);
+		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 15.0);
 		GetParameter(private_nh_, &position_controller_.alpha_m_, "control/alpha_m", 1.0);
 		GetParameter(private_nh_, &position_controller_.var_pi_p_, "control/var_pi_p", 1.0);
 		GetParameter(private_nh_, &position_controller_.var_pi_q_, "control/var_pi_q", 1.0);

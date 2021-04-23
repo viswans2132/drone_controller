@@ -19,12 +19,14 @@ namespace drone_controller{
 		// void setOdometryFromPose(const geometric_msgs::Pose& pose);
 		void setOdometry(const EigenOdometry& odom);
 
-		Eigen::Vector3d hatKp_;
+		Eigen::Vector3d hatKp0_;
+		Eigen::Vector3d hatKp1_;
 		Eigen::Vector3d hatKq0_;
 		Eigen::Vector3d hatKq1_;
 		Eigen::Vector3d hatKq2_;
 
-		Eigen::Vector3d alpha_p_;
+		Eigen::Vector3d alpha_p0_;
+		Eigen::Vector3d alpha_p1_;
 		Eigen::Vector3d alpha_q0_;
 		Eigen::Vector3d alpha_q1_;
 		Eigen::Vector3d alpha_q2_;
@@ -36,13 +38,13 @@ namespace drone_controller{
 		Eigen::Vector3d theta_q_;
 
 		double hatM_;
+		double max_thrust_;
 		double alpha_m_;
 		double var_pi_p_;
 		double var_pi_q_;
 
 		Eigen::Matrix4Xd allocation_matrix_;
 		RotorConfiguration rotor_config_;
-		double max_thrust_;
 		double gravity_;
 
 		bool controller_active_;

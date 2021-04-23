@@ -27,8 +27,8 @@ namespace drone_controller{
 		Eigen::Vector4d mass_inertia_;
 		Eigen::Matrix4Xd allocation_matrix_;
 		RotorConfiguration rotor_config_;
-		double max_thrust_;
 		double gravity_;
+		double max_thrust_;
 
 		bool controller_active_;
 
@@ -38,6 +38,8 @@ namespace drone_controller{
 		Eigen::Vector3d normalized_attitude_gain_;
 		Eigen::Vector3d normalized_angular_rate_gain_;
 		Eigen::MatrixX4d ang_acc_rpms_;
+
+		//double test_mass; //Added by Viswa
 
 		mav_msgs::EigenTrajectoryPoint com_traj_;
 		EigenOdometry odometry_;

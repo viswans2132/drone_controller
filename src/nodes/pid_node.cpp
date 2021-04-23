@@ -40,8 +40,8 @@ namespace drone_controller{
 		GetParameterArray(private_nh_, &position_controller_.Ki_p_, "control/Ki_p", Eigen::Vector3d(0.2, 0.2, 0.2));
 		GetParameterArray(private_nh_, &position_controller_.Kp_q_, "control/Kp_q", Eigen::Vector3d(1.0, 1.0, 0.03));
 		GetParameterArray(private_nh_, &position_controller_.Kv_q_, "control/Kv_q", Eigen::Vector3d(0.22, 0.22, 0.01));
-		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 20.0);
-		GetParameterArray(private_nh_, &position_controller_.mass_inertia_, "drone/mass", Eigen::Vector4d(1.0, 0.01, 0.01, 0.02));
+		GetParameterArray(private_nh_, &position_controller_.mass_inertia_, "drone/mass_inertia", Eigen::Vector4d(1.0, 0.01, 0.01, 0.02));
+		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 15.0);
 		GetRotorConfig(private_nh_, &position_controller_.rotor_config_);
 
 		position_controller_.initParams();
