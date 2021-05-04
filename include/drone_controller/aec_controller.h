@@ -1,5 +1,5 @@
-#ifndef DRONE_CONTROLLER_EC_CONTROLLER_H_
-#define DRONE_CONTROLLER_EC_CONTROLLER_H_
+#ifndef DRONE_CONTROLLER_AEC_CONTROLLER_H_
+#define DRONE_CONTROLLER_AEC_CONTROLLER_H_
 
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
@@ -8,10 +8,10 @@
 #include "drone_controller/common_operations.h"
 
 namespace drone_controller{
-	class EcController{
+	class AecController{
 	public:
-		EcController();
-		~EcController();
+		AecController();
+		~AecController();
 		void initParams();
 		void getRPMs(Eigen::VectorXd* rpms) ;
 		void getAttThrust(Eigen::VectorXd* att_thrust);
@@ -23,23 +23,28 @@ namespace drone_controller{
 		Eigen::Vector3d rho_0b_p_;
 		Eigen::Vector3d rho_ssa_p_;
 		Eigen::Vector3d rho_ssb_p_;
-		Eigen::Vector3d lam_p_;
-		Eigen::Vector3d eHat_p_;
-		Eigen::Vector3d eeta_p_;
 		double alpha_a_p_;
 		double alpha_b_p_;
+		Eigen::Vector3d lam_p_;
+		Eigen::Vector3d theta_p_;
+		Eigen::Vector3d hatK1a_p_;
+		Eigen::Vector3d hatK2a_p_;
+		Eigen::Vector3d hatK3a_p_;
+		Eigen::Vector3d hatK1b_p_;
+		Eigen::Vector3d hatK2b_p_;
+		Eigen::Vector3d hatK3b_p_;
+		Eigen::Vector3d hatK4b_p_;
+		Eigen::Vector3d alphaK1a_p_;
+		Eigen::Vector3d alphaK2a_p_;
+		Eigen::Vector3d alphaK3a_p_;
+		Eigen::Vector3d alphaK1b_p_;
+		Eigen::Vector3d alphaK2b_p_;
+		Eigen::Vector3d alphaK3b_p_;
+		Eigen::Vector3d alphaK4b_p_;
+		
 		double var_pi_p_;
-		Eigen::Vector3d rho_0a_q_;
-		Eigen::Vector3d rho_0b_q_;
-		Eigen::Vector3d rho_ssa_q_;
-		Eigen::Vector3d rho_ssb_q_;
-		Eigen::Vector3d lam_q_;
-		Eigen::Vector3d eHat_q_;
-		Eigen::Vector3d cHat_q_;
-		Eigen::Vector3d eeta_q_;
-		double alpha_a_q_;
-		double alpha_b_q_;
-		double var_pi_q_;
+		Eigen::Vector3d Kp_q_;
+		Eigen::Vector3d Kv_q_;
 		Eigen::Vector4d mass_inertia_;
 		Eigen::Matrix4Xd allocation_matrix_;
 		RotorConfiguration rotor_config_;
@@ -50,14 +55,17 @@ namespace drone_controller{
 
 	private:
 		bool initialized_params_;
-		Eigen::MatrixX4d thrust_moments_rpms_;
+
+		Eigen::Vector3d normalized_attitude_gain_;
+		Eigen::Vector3d normalized_angular_rate_gain_;
+		Eigen::MatrixX4d ang_acc_rpms_;
 
 		mav_msgs::EigenTrajectoryPoint com_traj_;
 		EigenOdometry odometry_;
 
 
-		void ComputeDesiredMoments(const Eigen::Vector3d& forces,
-		                            Eigen::Vector3d* moments);
+		void ComputeDesiredAngularAcc(const Eigen::Vector3d& forces,
+		                            Eigen::Vector3d* angular_acceleration);
 		void ComputeDesiredForces(Eigen::Vector3d* forces) ;
 
 	};
