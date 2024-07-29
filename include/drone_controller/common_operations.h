@@ -2,7 +2,10 @@
 #define DRONE_CONTROLLER_COMMON_H_
 
 #include <assert.h>
+#include <math.h>
 #include <boost/algorithm/string.hpp>
+#include <ros/ros.h>
+
 
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/default_topics.h>
@@ -291,6 +294,30 @@ namespace drone_controller{
 		*rpms = *ang_acc_rpms * angular_acceleration_thrust;
 		*rpms = rpms->cwiseMax(Eigen::VectorXd::Zero(rpms->rows()));
 		*rpms = rpms->cwiseSqrt();
+	}
+
+	inline void getYawFromOrientation(double* yaw, const Eigen::Quaterniond& orientation){
+		Eigen::Vector3d euler;
+		Eigen::Quaterniond orientation_;
+		orientation_.w() = orientation.w();
+		orientation_.x() = orientation.x();
+		orientation_.y() = orientation.z();
+		orientation_.z() = orientation.y();
+		// orientation_.w() = 1.0;
+		// orientation_.x() = 0;
+		// orientation_.y() = 0;
+		// orientation_.z() = 0;
+		euler = orientation.toRotationMatrix().eulerAngles(0,1,2);
+		// ROS_INFO_STREAM("euler: " << euler);
+		// ROS_INFO_STREAM("orientation: " << orientation[0] << " " << orientation[1] << " " << orientation[2] << " " << orientation[3]);
+		*yaw = euler[2];
+	}
+	inline double constrainAngle(double x){
+    x = fmod(x + 180,360);
+    if (x < 0){
+        x += 360;
+    }
+    return x - 180;
 	}
 
 }

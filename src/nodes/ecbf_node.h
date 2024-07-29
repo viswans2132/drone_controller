@@ -1,6 +1,6 @@
 
-#ifndef DRONE_CONTROLLER_AEC_NODE_H_
-#define DRONE_CONTROLLER_AEC_NODE_H_
+#ifndef DRONE_CONTROLLER_ECBF_NODE_H_
+#define DRONE_CONTROLLER_ECBF_NODE_H_
 
 #include <ros/ros.h>
 #include <mav_msgs/default_topics.h>
@@ -21,23 +21,24 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <ros/callback_queue.h>
+#include <ros/ros.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 //#include <apriltag_ros/AprilTagDetectionArray.h>
 
 // #include "rrc_control/common.h"
-#include "drone_controller/aec_controller.h"
+#include "drone_controller/ecbf_controller.h"
 
 namespace drone_controller{
-	class AecNode{
+	class EcbfNode{
 	public:
-		AecNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
-		~AecNode();
+		EcbfNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
+		~EcbfNode();
 
 		void initParams();
 	private:
 		ros::NodeHandle nh_;
 		ros::NodeHandle private_nh_;
-		AecController position_controller_;
+		EcbfController position_controller_;
 		
 		bool actuator_enabled_;
   		bool received_home_pose;

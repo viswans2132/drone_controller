@@ -15,7 +15,7 @@ namespace drone_controller{
 		mavState_sub_ = nh_.subscribe("mavros/state", 1, 
 							&PidNode::MavStateCallback, this, ros::TransportHints().tcpNoDelay());
 
-        pub_timer_ = nh_.createTimer(ros::Duration(0.01), &PidNode::PubCallback, this,
+        pub_timer_ = nh_.createTimer(ros::Duration(0.02), &PidNode::PubCallback, this,
 			false);
         com_timer_ = nh_.createTimer(ros::Duration(0), &PidNode::ComCallback, this,
 			true, false);
@@ -61,6 +61,19 @@ namespace drone_controller{
 		EigenOdometry odometry;
 		eigenOdometryFromMsg(msg, &odometry);
 		position_controller_.setOdometry(odometry);
+		if (actuator_enabled_){
+			Eigen::VectorXd ref_rpms;
+			position_controller_.getRPMs(&ref_rpms);
+			mav_msgs::ActuatorsPtr actuator_msg(new mav_msgs::Actuators);
+
+			actuator_msg->angular_velocities.clear();
+			for (int i = 0; i < ref_rpms.size(); i++)
+			  actuator_msg->angular_velocities.push_back(ref_rpms[i]);
+			actuator_msg->header.stamp = ros::Time::now();
+			// data_out_.header.stamp = ros::Time::now();
+
+			rpm_pub_.publish(actuator_msg);
+		}
 	}
 
 	void PidNode::TrajCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg){
@@ -121,7 +134,7 @@ namespace drone_controller{
 			actuator_msg->header.stamp = ros::Time::now();
 			// data_out_.header.stamp = ros::Time::now();
 
-			rpm_pub_.publish(actuator_msg);
+			// rpm_pub_.publish(actuator_msg);
 		}
 		else{
 			Eigen::VectorXd att_thrust(5);

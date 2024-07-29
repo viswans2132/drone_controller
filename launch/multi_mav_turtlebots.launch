@@ -1,0 +1,104 @@
+<launch>
+  <arg name="mav_name" default="pelican"/>
+  <arg name="con_name" default="multi_ecbf"/>
+  <arg name="world_name" default="basic"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg mav_name)" />
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="paused" default="true"/>
+  <!-- The following line causes gzmsg and gzerr messages to be printed to the console
+      (even when Gazebo is started through roslaunch) -->
+  <arg name="verbose" default="false"/>
+
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world" />
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="verbose" value="$(arg verbose)"/>
+  </include>
+
+ <!-- SPAWN A UAV -->
+  <group ns="drone1">
+    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+      <arg name="namespace" value="drone1"/>
+      <arg name="mav_name" value="pelican"/>
+      <arg name="model" value="$(find rotors_description)/urdf/mav_generic_odometry_sensor.gazebo" />
+      <arg name="enable_logging" value="$(arg enable_logging)" />
+      <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      <arg name="x" default="-1.045"/>
+      <arg name="y" default="1.53"/>
+      <arg name="z" default="0.28"/>
+      <arg name="color" value="Gazebo/BlueTransparent" />
+    </include> 
+
+    
+
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+  </group>
+
+
+  <group ns="drone2">
+    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+      <arg name="namespace" value="drone2"/>
+      <arg name="mav_name" value="pelican"/>
+      <arg name="model" value="$(find rotors_description)/urdf/mav_generic_odometry_sensor.gazebo" />
+      <arg name="enable_logging" value="$(arg enable_logging)" />
+      <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      <arg name="x" default="-0.06"/>
+      <arg name="y" default="-0.1"/>
+      <arg name="z" default="0.28"/>
+      <arg name="color" value="Gazebo/GreenTransparent" />
+    </include>     
+      
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  </group>
+
+ 
+  <group ns="usv1">
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_waffle_pi.urdf.xacro' color:='Gazebo/BlueTransparent'"/>
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_burger_1 -x 0.50 -y -0.1 -z 0.0 -param robot_description" />
+    <param name="tf_prefix" value="usv1" />
+
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  </group>
+ 
+  <group ns="usv2">
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find turtlebot3_description)/urdf/turtlebot3_waffle_pi.urdf.xacro' color:='Gazebo/BlueTransparent'"/>
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_burger_2 -x -0.0 -y 0.50 -z 0.0 -param robot_description" />
+    <param name="tf_prefix" value="usv2" />
+
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  </group>
+    
+    <node pkg="tf" type="static_transform_publisher" name="odom1_world_broadcaster" args="0 0 0 0 0 0 1 world usv1/odom 1" />
+    <node pkg="tf" type="static_transform_publisher" name="odom2_world_broadcaster" args="0 0 0 0 0 0 1 world usv2/odom 1" /><!-- 
+    <node pkg="tf" type="static_transform_publisher" name="odom3_world_broadcaster" args="0 0 0 0 0 0 1 world usv2/base_footprint 1" />
+    <node pkg="tf" type="static_transform_publisher" name="odom4_world_broadcaster" args="0 1 0 0 0 0 1 world usv1/base_footprint 1" /> -->
+
+
+  <node name="controller_node" pkg="drone_controller" type="$(arg con_name)_node" output="screen">
+    <rosparam command="load" file="$(find drone_controller)/resources/$(arg con_name)_$(arg mav_name).yaml" />
+    <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
+    <remap from="odom_msg_01" to="/drone1/odometry_sensor1/odometry" />
+    <remap from="odom_msg_02" to="/drone2/odometry_sensor1/odometry" />
+    <remap from="traj_msg" to="command/trajectory" />
+  </node>  
+
+ 
+
+
+
+</launch>

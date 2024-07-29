@@ -1,26 +1,26 @@
-#include "aec_node.h"
+#include "ecbf_node.h"
 
 namespace drone_controller{
-	AecNode::AecNode(
+	EcbfNode::EcbfNode(
 		const ros::NodeHandle& nh, const ros::NodeHandle& private_nh)
 	:nh_(nh), private_nh_(private_nh){
 		initParams();
 
 		pose_sub_ = nh_.subscribe("pose_msg", 1, 
-                            &AecNode::PoseCallback, this);
+                            &EcbfNode::PoseCallback, this);
 		odom_sub_ = nh_.subscribe("odom_msg", 1, 
-                            &AecNode::OdomCallback, this);
+                            &EcbfNode::OdomCallback, this);
 		traj_sub_ = nh_.subscribe("traj_msg", 1, 
-                            &AecNode::TrajCallback, this);
+                            &EcbfNode::TrajCallback, this);
 		mavState_sub_ = nh_.subscribe("mavros/state", 1, 
-							&AecNode::MavStateCallback, this, ros::TransportHints().tcpNoDelay());
+							&EcbfNode::MavStateCallback, this, ros::TransportHints().tcpNoDelay());
 
-        pub_timer_ = nh_.createTimer(ros::Duration(0.01), &AecNode::PubCallback, this,
+        pub_timer_ = nh_.createTimer(ros::Duration(0.02), &EcbfNode::PubCallback, this,
 			false);
-        com_timer_ = nh_.createTimer(ros::Duration(0), &AecNode::ComCallback, this,
+        com_timer_ = nh_.createTimer(ros::Duration(0), &EcbfNode::ComCallback, this,
 			true, false);
-        sts_timer_ = nh_.createTimer(ros::Duration(0), &AecNode::StsCallback, this, false);
-        mavCom_timer_ = nh_.createTimer(ros::Duration(0), &AecNode::MavComCallback, this, false);
+        sts_timer_ = nh_.createTimer(ros::Duration(0), &EcbfNode::StsCallback, this, false);
+        mavCom_timer_ = nh_.createTimer(ros::Duration(0), &EcbfNode::MavComCallback, this, false);
 
         rpm_pub_ = nh_.advertise<mav_msgs::Actuators>(
 			mav_msgs::default_topics::COMMAND_ACTUATORS, 1);
@@ -31,37 +31,21 @@ namespace drone_controller{
         genHomePose(Eigen::Vector3d(0,0,0), &home_pose_.pose);
 	}
 
-	AecNode::~AecNode() {}
+	EcbfNode::~EcbfNode() {}
 
-	void AecNode::initParams(){
+	void EcbfNode::initParams(){
 		private_nh_.getParam("actuator_enabled", actuator_enabled_);
-		GetParameterArray(private_nh_, &position_controller_.rho_0a_p_, "control/rho_0a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.rho_0b_p_, "control/rho_0b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.rho_ssa_p_, "control/rho_ssa_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.rho_ssb_p_, "control/rho_ssb_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameter(private_nh_, &position_controller_.alpha_a_p_, "control/alpha_a_p", 20.0);
-		GetParameter(private_nh_, &position_controller_.alpha_b_p_, "control/alpha_b_p", 20.0);
-		GetParameterArray(private_nh_, &position_controller_.lam_p_, "control/lam_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.theta_p_, "control/theta_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK1a_p_, "control/hatK1a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK2a_p_, "control/hatK2a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK3a_p_, "control/hatK3a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK1b_p_, "control/hatK1b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK2b_p_, "control/hatK2b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK3b_p_, "control/hatK3b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.hatK4b_p_, "control/hatK4b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK1a_p_, "control/alphaK1a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK2a_p_, "control/alphaK2a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK3a_p_, "control/alphaK3a_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK1b_p_, "control/alphaK1b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK2b_p_, "control/alphaK2b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK3b_p_, "control/alphaK3b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameterArray(private_nh_, &position_controller_.alphaK4b_p_, "control/alphaK4b_p", Eigen::Vector3d(4.0, 4.0, 4.0));
-		GetParameter(private_nh_, &position_controller_.var_pi_p_, "control/var_pi_p", 20.0);
+		GetParameterArray(private_nh_, &position_controller_.Kp_p_, "control/Kp_p", Eigen::Vector3d(4.0, 4.0, 4.0));
+		GetParameterArray(private_nh_, &position_controller_.Kv_p_, "control/Kv_p", Eigen::Vector3d(2.7, 2.7, 2.7));
+		GetParameterArray(private_nh_, &position_controller_.Ki_p_, "control/Ki_p", Eigen::Vector3d(0.2, 0.2, 0.2));
 		GetParameterArray(private_nh_, &position_controller_.Kp_q_, "control/Kp_q", Eigen::Vector3d(1.0, 1.0, 0.03));
 		GetParameterArray(private_nh_, &position_controller_.Kv_q_, "control/Kv_q", Eigen::Vector3d(0.22, 0.22, 0.01));
-		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 20.0);
-		GetParameterArray(private_nh_, &position_controller_.mass_inertia_, "drone/mass", Eigen::Vector4d(1.0, 0.01, 0.01, 0.02));
+		GetParameterArray(private_nh_, &position_controller_.mass_inertia_, "drone/mass_inertia", Eigen::Vector4d(1.0, 0.01, 0.01, 0.02));
+		GetParameter(private_nh_, &position_controller_.max_thrust_, "control/max_thrust", 15.0);
+		GetParameter(private_nh_, &position_controller_.max_velocity_, "control/max_velocity", 0.5);
+		GetParameter(private_nh_, &position_controller_.Kh_scale_, "control/Kh_scale", 1.0);
+		GetParameter(private_nh_, &position_controller_.Kh_b_, "control/Kh_b", 0.0);
+		GetParameter(private_nh_, &position_controller_.Kh_offset_, "control/Kh_offset", 0.0);
 		GetRotorConfig(private_nh_, &position_controller_.rotor_config_);
 
 		position_controller_.initParams();
@@ -70,14 +54,14 @@ namespace drone_controller{
 		sts_timer_.start();
 	}
 
-	void AecNode::PoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg){
+	void EcbfNode::PoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg){
 		EigenOdometry odometry;
 		eigenOdometryFromPoseMsg(msg, &odometry);
 		position_controller_.setOdometry(odometry);
 		home_pose_.pose.position = msg->pose.pose.position;
 	}
 
-	void AecNode::OdomCallback(const nav_msgs::OdometryConstPtr& msg){
+	void EcbfNode::OdomCallback(const nav_msgs::OdometryConstPtr& msg){
 		EigenOdometry odometry;
 		eigenOdometryFromMsg(msg, &odometry);
 		position_controller_.setOdometry(odometry);
@@ -96,7 +80,7 @@ namespace drone_controller{
 		}
 	}
 
-	void AecNode::TrajCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg){
+	void EcbfNode::TrajCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg){
 		ROS_INFO_ONCE("Received first waypoint");
 		const size_t no_points = msg->points.size();
 		if (no_points<1){
@@ -128,7 +112,7 @@ namespace drone_controller{
 		}
 	}
 
-	void AecNode::ComCallback(const ros::TimerEvent &e){	
+	void EcbfNode::ComCallback(const ros::TimerEvent &e){	
 		ROS_INFO_STREAM("Timed callback working");
 		position_controller_.setTraj(com_.front());
 		com_.pop_front();
@@ -142,7 +126,7 @@ namespace drone_controller{
 
 	}
 
-	void AecNode::PubCallback(const ros::TimerEvent &e){
+	void EcbfNode::PubCallback(const ros::TimerEvent &e){
 		if (actuator_enabled_){
 			Eigen::VectorXd ref_rpms;
 			position_controller_.getRPMs(&ref_rpms);
@@ -178,7 +162,7 @@ namespace drone_controller{
 	  	// plot_data_pub_.publish(data_out_);
 	}
 
-	void AecNode::StsCallback(const ros::TimerEvent &e){
+	void EcbfNode::StsCallback(const ros::TimerEvent &e){
 		// Enable OFFBoard mode and arm automatically
 		// This is only run if the vehicle is simulated
 		arm_cmd_.request.value = true;
@@ -199,7 +183,7 @@ namespace drone_controller{
 		}
 	}
 
-	void AecNode::MavComCallback(const ros::TimerEvent &e){
+	void EcbfNode::MavComCallback(const ros::TimerEvent &e){
 		switch (node_state_) {
 			case WAITING_FOR_HOME_POSE:
 				waitForPredicate(&received_home_pose, "Waiting for home pose...");
@@ -227,18 +211,18 @@ namespace drone_controller{
 		}
 	}
 
-	void AecNode::MavStateCallback(const mavros_msgs::State::ConstPtr &msg) { 
+	void EcbfNode::MavStateCallback(const mavros_msgs::State::ConstPtr &msg) { 
 		current_state_ = *msg;
 	}
 
 }
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "aec_node");
+  ros::init(argc, argv, "ecbf_node");
 
   ros::NodeHandle nh;
   ros::NodeHandle private_nh("~");
-  drone_controller::AecNode aec_node(nh, private_nh);
+  drone_controller::EcbfNode ecbf_node(nh, private_nh);
 
   ros::spin();
 

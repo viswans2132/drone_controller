@@ -59,8 +59,6 @@ namespace drone_controller{
 		// Project thrust onto body z axis.
 		double thrust = forces.dot(odometry_.orientation.toRotationMatrix().col(2));
 
-		ROS_INFO_STREAM(thrust);
-
 		rpmConversion(rpms, &ang_acc_rpms_, angular_acceleration, thrust);
 	}
 
@@ -82,6 +80,7 @@ namespace drone_controller{
 		ros::Time current_time;
 
 
+		Eigen::Vector3d sp = velocity_error + theta_p_.cwiseProduct(position_error);
 
 		current_time = ros::Time::now();
 		double time_from_start = (current_time - start_time).toSec();
@@ -90,64 +89,51 @@ namespace drone_controller{
 
 		Eigen::Vector3d kap = (rho_0a_p_ - rho_ssa_p_)*std::exp(-alpha_a_p_*time_from_start)
 								+ rho_ssa_p_;
-		// Eigen::Vector3d kbp = (rho_0b_p_ - rho_ssb_p_)*std::exp(-alpha_b_p_*time_from_start)
-		// 						+ rho_ssb_p_;
+		Eigen::Vector3d kbp = (rho_0b_p_ - rho_ssb_p_)*std::exp(-alpha_b_p_*time_from_start)
+								+ rho_ssb_p_;
 
 		Eigen::Vector3d dot_kap = -alpha_a_p_*(rho_0a_p_ - rho_ssa_p_)*std::exp(-alpha_a_p_*time_from_start);
-		// Eigen::Vector3d dot_kbp = -alpha_b_p_*(rho_0b_p_ - rho_ssb_p_)*std::exp(-alpha_b_p_*time_from_start);
+		Eigen::Vector3d dot_kbp = -alpha_b_p_*(rho_0b_p_ - rho_ssb_p_)*std::exp(-alpha_b_p_*time_from_start);
 
 		Eigen::Vector3d position_error_sq = position_error.array().square();
 		Eigen::Vector3d velocity_error_sq = velocity_error.array().square();
 		Eigen::Vector3d kap_sq = kap.array().square();
-		// Eigen::Vector3d kbp_sq = kbp.array().square();
+		Eigen::Vector3d kbp_sq = kbp.array().square();
 
-		Eigen::Vector3d pos_bound_diff = kap_sq - position_error_sq;
-		pos_bound_diff = pos_bound_diff.cwiseMax(Eigen::Vector3d(0.4, 0.4, 0.05));
-
-		Eigen::Vector3d zap = pos_bound_diff.array().inverse();
-
+		Eigen::Vector3d zap = (kap_sq - position_error_sq).array().inverse();
+		Eigen::Vector3d zbp = (kbp_sq - velocity_error_sq).array().inverse();
 		Eigen::Vector3d zap_sq = zap.array().square();
+		Eigen::Vector3d zbp_sq = zbp.array().square();
 
 		Eigen::Vector3d xi_p_sq = position_error_sq + velocity_error_sq;
 		Eigen::Vector3d xi_p = xi_p_sq.cwiseSqrt();
 		Eigen::Vector3d xi_p_cu = xi_p_sq.cwiseProduct(xi_p);
 
-		Eigen::Vector3d sp = velocity_error + theta_p_.cwiseProduct(position_error.cwiseProduct(zap));
 		Eigen::Vector3d sp_abs = sp.cwiseAbs();
 
-		hatK1a_p_ += (-sp - alphaK1a_p_.cwiseProduct(hatK1a_p_))*dt;
-		hatK2a_p_ += (sp_abs.cwiseProduct(xi_p) - alphaK2a_p_.cwiseProduct(hatK2a_p_))*dt;
-		hatK3a_p_ += (sp_abs.cwiseProduct(xi_p.cwiseProduct(zap)) - alphaK3a_p_.cwiseProduct(hatK3a_p_))*dt;
-		hatK1b_p_ += (sp_abs.cwiseProduct(xi_p.cwiseProduct(zap_sq)) - alphaK1b_p_.cwiseProduct(hatK1b_p_))*dt;
-		hatK2b_p_ += (sp_abs.cwiseProduct(xi_p_cu.cwiseProduct(zap_sq)) - alphaK2b_p_.cwiseProduct(hatK2b_p_))*dt;
-
-
-		hatK1a_p_ = (hatK1b_p_.cwiseMax(0.01)).cwiseMin(2);
-		hatK2a_p_ = (hatK2a_p_.cwiseMax(0.01)).cwiseMin(1);
-		hatK3a_p_ = (hatK3a_p_.cwiseMax(0.01)).cwiseMin(1);
-		hatK1b_p_ = (hatK1b_p_.cwiseMax(0.01)).cwiseMin(5);
-		hatK2b_p_ = (hatK2b_p_.cwiseMax(0.01)).cwiseMin(5);
+		hatK1a_p_ += (sp_abs.cwiseProduct(zap.cwiseProduct(xi_p)) - alphaK1a_p_.cwiseProduct(hatK1a_p_))*dt;
+		hatK1a_p_ += (sp_abs.cwiseProduct(zap_sq.cwiseProduct(xi_p)) - alphaK2a_p_.cwiseProduct(hatK2a_p_))*dt;
+		hatK1a_p_ += (sp_abs.cwiseProduct(zap_sq.cwiseProduct(xi_p_cu)) - alphaK3a_p_.cwiseProduct(hatK3a_p_))*dt;
+		hatK1a_p_ += (sp_abs.cwiseProduct(zbp) - alphaK1b_p_.cwiseProduct(hatK1b_p_))*dt;
+		hatK1a_p_ += (sp_abs.cwiseProduct(zbp_sq.cwiseProduct(xi_p)) - alphaK2b_p_.cwiseProduct(hatK2b_p_))*dt;
+		hatK1a_p_ += (sp_abs.cwiseProduct(zbp_sq.cwiseProduct(xi_p_sq)) - alphaK3b_p_.cwiseProduct(hatK3b_p_))*dt;
+		hatK1a_p_ += (sp_abs.cwiseProduct(zbp_sq.cwiseProduct(xi_p_cu)) - alphaK4b_p_.cwiseProduct(hatK4b_p_))*dt;
   
 		Eigen::Vector3d zeta_p(0,0,0);
-		zeta_p << hatK1a_p_
-					+ hatK2a_p_.cwiseProduct(xi_p);
-					// + hatK3a_p_.cwiseProduct(zap.cwiseProduct(xi_p)) 
-					// + hatK1b_p_.cwiseProduct(zap_sq.cwiseProduct(xi_p))
-					// + hatK2b_p_.cwiseProduct(zap_sq.cwiseProduct(xi_p_cu));
+		zeta_p << hatK1a_p_.cwiseProduct(zap.cwiseProduct(xi_p)) 
+					+ hatK2a_p_.cwiseProduct(zap_sq.cwiseProduct(xi_p))
+					+ hatK3a_p_.cwiseProduct(zap_sq.cwiseProduct(xi_p_cu))
+					+ hatK1b_p_.cwiseProduct(zbp)
+					+ hatK2b_p_.cwiseProduct(zbp_sq.cwiseProduct(xi_p))
+					+ hatK3b_p_.cwiseProduct(zbp_sq.cwiseProduct(xi_p_sq))
+					+ hatK4b_p_.cwiseProduct(zbp_sq.cwiseProduct(xi_p_cu));
 
 		Eigen::Vector3d delTau_p(0,0,0);
 		delTau_p << zeta_p[0]*signumFn(sp[0], var_pi_p_), 
 		          	zeta_p[1]*signumFn(sp[1], var_pi_p_),
 		            zeta_p[2]*signumFn(sp[2], var_pi_p_); 
-
-        delTau_p << 0 , 0, 0;
-        Eigen::Vector3d hatM = Eigen::Vector3d::Zero();
-        hatM[2] = hatK1a_p_[2];
-
-        ROS_INFO_STREAM("hatM: " << hatM[2]);
-
-
-		*forces = -lam_p_.cwiseProduct(sp) - delTau_p + 9.81*hatM;
+		
+		*forces = -lam_p_.cwiseProduct(sp) - delTau_p;
 
 		// *forces << 0, 0, 0;
 

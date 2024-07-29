@@ -4,12 +4,17 @@ drone: {
 }
 
 control: {
-  Kp_p: "4.0, 4.0, 4.0",
+  Kp_p: "3.0, 3.0, 0.5",
   Kv_p: "2.7, 2.7, 2.7",
   Ki_p: "0.0, 0.0, 0.0",
 
   Kp_q: "1.0, 1.0, 0.035",
   Kv_q: "0.22, 0.22, 0.01",
 
-  max_thrust: 20.0
+  Kh_b: 4.0,
+  Kh_scale: 2.5,
+  Kh_offset: 0.05,
+
+  max_thrust: 20.0,
+  max_velocity: 0.8
 }

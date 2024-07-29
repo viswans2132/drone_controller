@@ -11,7 +11,7 @@
       (even when Gazebo is started through roslaunch) -->
   <arg name="verbose" default="false"/>
 
-  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rrc_control)/aerotrain"/>
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find rrc_control)/worlds/$(arg world_name).world" />
@@ -30,17 +30,21 @@
       <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
       <arg name="log_file" value="$(arg log_file)"/>
     </include>
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
   </group>
 
-  <param name="box0_desc" command="$(find xacro)/xacro --inorder '$(find rrc_control)/models/urdf/box0.xacro' namespace:='box0' mass:=0.4" />  
+  <param name="box0_desc" command="$(find xacro)/xacro --inorder '$(find rrc_control)/models/urdf/box0.xacro' namespace:='box0' mass:=2.0" />  
   <node name="spawn_box0" pkg="gazebo_ros" type="spawn_model"
    args="-param box0_desc
          -urdf
          -x 2.0
-         -y 2.0
+         -y 4.0
          -z 0.1
          -model 'box0'"
    respawn="false" output="screen">
   </node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
 
 </launch>

@@ -1,16 +1,16 @@
-#include "drone_controller/pid_controller.h"
-
+#include "drone_controller/ecbf_controller.h"
+#include <OsqpEigen/OsqpEigen.h>
 
 namespace drone_controller{
-	PidController::PidController()
+	EcbfController::EcbfController()
 		: initialized_params_(false),
 		  controller_active_(false)	{
 	  	initParams();
 	}
 
-	PidController::~PidController() {}
+	EcbfController::~EcbfController() {}
 
-	void PidController::initParams(){
+	void EcbfController::initParams(){
 		calculateAllocationMatrix(rotor_config_, &(allocation_matrix_));
 
 		Eigen::Matrix3d inertia = mass_inertia_.tail(3).asDiagonal();
@@ -38,7 +38,7 @@ namespace drone_controller{
 		initialized_params_ = true;
 	}
 
-	void PidController::getRPMs(Eigen::VectorXd* rpms) const{
+	void EcbfController::getRPMs(Eigen::VectorXd* rpms) const{
 		assert(rpms);
 		assert(initialized_params_);
 
@@ -64,11 +64,69 @@ namespace drone_controller{
 		rpmConversion(rpms, &ang_acc_rpms_, angular_acceleration, thrust);
 	}
 
-	void PidController::ComputeDesiredForces(Eigen::Vector3d* forces) const{
+	void EcbfController::ComputeDesiredForces(Eigen::Vector3d* forces) const{
 		assert(forces);
 
-		Eigen::Vector3d position_error;
+		Eigen::Vector3d position_error, psuedo_velocity_ref;
 		position_error = odometry_.position - com_traj_.position_W;
+
+		psuedo_velocity_ref = -position_error.cwiseProduct(Kp_p_);
+		// position_error[2] = position_error[2] - 0.1;
+
+		// Eigen::Vector3d position_error_sq = position_error.array().square();
+		double x2y2_sqrt = std::sqrt(position_error[0]*position_error[0] + position_error[1]*position_error[1]);
+
+		// ROS_INFO_STREAM("Sqrt(4): " << std::sqrt(4) << " Exp(-1): " << std::exp(-1));
+
+
+		constexpr double tolerance = 1e-4;
+		Eigen::SparseMatrix<c_float> H_s(3,3);
+	    H_s.insert(0,0) = 2;
+	    H_s.insert(1,1) = 2;
+	    H_s.insert(2,2) = 2;
+
+	    Eigen::SparseMatrix<c_float> A_s(1,3);
+	    A_s.insert(0,0) = Kh_scale_*position_error[0]*std::exp(-x2y2_sqrt)*(x2y2_sqrt-1)/x2y2_sqrt;
+	    A_s.insert(0,1) = Kh_scale_*position_error[1]*std::exp(-x2y2_sqrt)*(x2y2_sqrt-1)/x2y2_sqrt;
+	    A_s.insert(0,2) = 1;
+
+	    double h = position_error[2] - Kh_scale_*(x2y2_sqrt)*std::exp(-x2y2_sqrt) - Kh_offset_;
+
+	    Eigen::Matrix<c_float, 3, 1> gradient;
+	    gradient << -2*psuedo_velocity_ref[0], -2*psuedo_velocity_ref[1], -2*psuedo_velocity_ref[2];
+
+	    Eigen::Matrix<c_float, 1, 1> lowerBound;
+	    lowerBound << -Kh_b_*h;
+
+	    Eigen::Matrix<c_float, 1, 1> upperBound;
+	    upperBound << 50;
+
+	    OsqpEigen::Solver solver;
+	    solver.settings()->setVerbosity(true);
+	    solver.settings()->setAlpha(1.0);
+
+	    solver.data()->setHessianMatrix(H_s);
+	    solver.data()->setNumberOfVariables(3);
+
+	    solver.data()->setNumberOfConstraints(1);
+	    solver.data()->setHessianMatrix(H_s);
+	    solver.data()->setGradient(gradient);
+	    solver.data()->setLinearConstraintsMatrix(A_s);
+	    solver.data()->setLowerBound(lowerBound);
+	    solver.data()->setUpperBound(upperBound);
+
+	    solver.initSolver();
+	    solver.solveProblem() == OsqpEigen::ErrorExitFlag::NoError;
+	    
+	    Eigen::Matrix<c_float, 3, 1> expectedSolution;
+    	expectedSolution << psuedo_velocity_ref[0], psuedo_velocity_ref[1], psuedo_velocity_ref[2];
+
+    	Eigen::Vector3d velocity_ref = solver.getSolution();
+
+    	// psuedo_velocity_ref = 0.1*Eigen::Vector3d::Ones().cwiseMin(psuedo_velocity_ref.cwiseMax(-0.1*Eigen::Vector3d::Ones()));
+    	if (velocity_ref.norm() > max_velocity_){
+    		velocity_ref = velocity_ref*(max_velocity_/velocity_ref.norm());
+    	}
 
 		// Transform velocity to world frame.
 		const Eigen::Matrix3d R_W_I = odometry_.orientation.toRotationMatrix();
@@ -88,8 +146,7 @@ namespace drone_controller{
 
 
 
-		*forces = - (position_error.cwiseProduct(Kp_p_) + velocity_error.cwiseProduct(Kv_p_)
-						+ position_error_integral.cwiseProduct(Ki_p_))
+		*forces = - (velocity_error-velocity_ref).cwiseProduct(Kv_p_)
 						+ (gravity_ * e_3 + com_traj_.acceleration_W) * mass_inertia_[0];
 
 		// ROS_INFO_STREAM("forces: "<< *forces);
@@ -97,7 +154,7 @@ namespace drone_controller{
 
 	}
 
-	void PidController::ComputeDesiredAngularAcc(const Eigen::Vector3d& forces,
+	void EcbfController::ComputeDesiredAngularAcc(const Eigen::Vector3d& forces,
 	                                                     Eigen::Vector3d* angular_acceleration) const {
 		assert(angular_acceleration);
 
@@ -128,10 +185,10 @@ namespace drone_controller{
 	  // tf::vectorEigenToMsg(*angular_acceleration, data_out->angular_acceleration);
 	  // tf::vectorEigenToMsg(angle_error, data_out->angle_error);
 	  // tf::vectorEigenToMsg(angular_rate_error, data_out->angle_rate_error);
-		ROS_INFO_STREAM("moments: "<< *angular_acceleration);
+		// ROS_INFO_STREAM("moments: "<< *angular_acceleration);
 	}
 
-	void PidController::getAttThrust(Eigen::VectorXd* att_thrust) const{
+	void EcbfController::getAttThrust(Eigen::VectorXd* att_thrust) const{
 		assert(att_thrust);
 
 		Eigen::Vector3d forces;
@@ -150,11 +207,11 @@ namespace drone_controller{
 		(*att_thrust)[4] = des_quat.w();
 	}
 
-	void PidController::setOdometry(const EigenOdometry& odometry){
+	void EcbfController::setOdometry(const EigenOdometry& odometry){
 		odometry_ = odometry;
 	}
 
-	void PidController::setTraj(const mav_msgs::EigenTrajectoryPoint& command_trajectory) {
+	void EcbfController::setTraj(const mav_msgs::EigenTrajectoryPoint& command_trajectory) {
 		com_traj_ = command_trajectory;
 		controller_active_ = true;
 	}

@@ -1,6 +1,6 @@
 
-#ifndef DRONE_CONTROLLER_AEC_NODE_H_
-#define DRONE_CONTROLLER_AEC_NODE_H_
+#ifndef DRONE_CONTROLLER_MULTI_ECBF_NODE_H_
+#define DRONE_CONTROLLER_MULTI_ECBF_NODE_H_
 
 #include <ros/ros.h>
 #include <mav_msgs/default_topics.h>
@@ -21,23 +21,24 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <ros/callback_queue.h>
+#include <ros/ros.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 //#include <apriltag_ros/AprilTagDetectionArray.h>
 
 // #include "rrc_control/common.h"
-#include "drone_controller/aec_controller.h"
+#include "drone_controller/multi_ecbf_controller.h"
 
 namespace drone_controller{
-	class AecNode{
+	class MultiEcbfNode{
 	public:
-		AecNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
-		~AecNode();
+		MultiEcbfNode(const ros::NodeHandle& nh, const ros::NodeHandle& private_nh);
+		~MultiEcbfNode();
 
 		void initParams();
 	private:
 		ros::NodeHandle nh_;
 		ros::NodeHandle private_nh_;
-		AecController position_controller_;
+		MultiEcbfController position_controller_;
 		
 		bool actuator_enabled_;
   		bool received_home_pose;
@@ -54,20 +55,28 @@ namespace drone_controller{
 		ros::ServiceServer land_service_;
 
 
-		ros::Subscriber odom_sub_;
+		ros::Subscriber odom_sub_01;
+		ros::Subscriber odom_sub_02;
+		ros::Subscriber com_odom_sub_01;
+		ros::Subscriber com_odom_sub_02;
 		ros::Subscriber pose_sub_;
-		ros::Subscriber traj_sub_;
+		ros::Subscriber traj_sub_01;
+		ros::Subscriber traj_sub_02;
 		ros::Subscriber mavState_sub_;
 
 		ros::Publisher thr_pub_;
 		ros::Publisher att_pub_;
-		ros::Publisher rpm_pub_;
+		ros::Publisher rpm_pub_01;
+		ros::Publisher rpm_pub_02;
 		ros::Publisher tgt_pub_;
 
-		mav_msgs::EigenTrajectoryPointDeque com_;
+		mav_msgs::EigenTrajectoryPointDeque com_01;
+		mav_msgs::EigenTrajectoryPointDeque com_02;
 
-		std::deque<ros::Duration> com_wt_;
-		ros::Timer com_timer_;
+		std::deque<ros::Duration> com_wt_01;
+		std::deque<ros::Duration> com_wt_02;
+		ros::Timer com_timer_01;
+		ros::Timer com_timer_02;
 		ros::Timer pub_timer_;
 		ros::Timer mavCom_timer_;
 		ros::Timer sts_timer_;
@@ -79,14 +88,19 @@ namespace drone_controller{
 		enum FlightState { WAITING_FOR_HOME_POSE, MISSION_EXECUTION, LANDING, LANDED } node_state_;
 
 		void PoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
-		void OdomCallback(const nav_msgs::OdometryConstPtr& msg);
-		void TrajCallback(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
+		void OdomCallback_01(const nav_msgs::OdometryConstPtr& msg);
+		void OdomCallback_02(const nav_msgs::OdometryConstPtr& msg);
+		void TrajCallback_01(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
+		void TrajCallback_02(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg);
 
-		void ComCallback(const ros::TimerEvent &e);
+		void ComCallback_01(const ros::TimerEvent &e);
+		void ComCallback_02(const ros::TimerEvent &e);
 		void PubCallback(const ros::TimerEvent &e);
 		void MavComCallback(const ros::TimerEvent &e);
 		void MavStateCallback(const mavros_msgs::State::ConstPtr &msg);
 		void StsCallback(const ros::TimerEvent &e);
+		void ComOdomCallback_01(const nav_msgs::OdometryConstPtr& msg);
+		void ComOdomCallback_02(const nav_msgs::OdometryConstPtr& msg);
 	};
 }
 

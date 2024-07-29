@@ -1,6 +1,6 @@
 <launch>
   <arg name="mav_name" default="pelican"/>
-  <arg name="controller_name" default="asm"/>
+  <arg name="controller_name" default="aec"/>
   <arg name="world_name" default="basic"/>
   <arg name="enable_logging" default="false" />
   <arg name="enable_ground_truth" default="true" />
@@ -20,6 +20,6 @@
       <remap from="traj_msg" to="command/trajectory" />
       
     </node>
-    <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher_file" output="screen" args="$(find rrc_control)/resources/waypoints.txt" />
+    <node name="waypoint_publisher" pkg="rotors_gazebo" type="waypoint_publisher_file" output="screen" args="$(find drone_controller)/resources/waypoints.txt" />
   </group>
 </launch>

@@ -1,5 +1,5 @@
-#ifndef DRONE_CONTROLLER_PID_CONTROLLER_H_
-#define DRONE_CONTROLLER_PID_CONTROLLER_H_
+#ifndef DRONE_CONTROLLER_ECBF_CONTROLLER_H_
+#define DRONE_CONTROLLER_ECBF_CONTROLLER_H_
 
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
@@ -8,10 +8,10 @@
 #include "drone_controller/common_operations.h"
 
 namespace drone_controller{
-	class PidController{
+	class EcbfController{
 	public:
-		PidController();
-		~PidController();
+		EcbfController();
+		~EcbfController();
 		void initParams();
 		void getRPMs(Eigen::VectorXd* rpms) const;
 		void getAttThrust(Eigen::VectorXd* att_thrust) const;
@@ -29,6 +29,10 @@ namespace drone_controller{
 		RotorConfiguration rotor_config_;
 		double gravity_;
 		double max_thrust_;
+		double max_velocity_;
+		double Kh_scale_;
+		double Kh_offset_;
+		double Kh_b_;
 
 		bool controller_active_;
 

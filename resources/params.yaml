@@ -1,6 +1,6 @@
 actuator_enabled: true
 drone: {
-  mass: "1.0, 0.02, 0.02, 0.04"
+  mass: "1.0, 0.01, 0.01, 0.02"
 }
 control: {
   Ki_p: "0.0, 0.0, 0.0",

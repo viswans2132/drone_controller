@@ -123,7 +123,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/viswa/rotors_quad/Trial_Repo/drone_controller/src/drone_controller/models/spine.stl</uri>
+            <uri>/home/viswa_ns/sim/src/drone_controller/models/spine.stl</uri>
             <scale>0.001 0.001 0.001</scale>
           </mesh>
         </geometry>
@@ -150,7 +150,7 @@
         <pose frame=''>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
-            <uri>/home/viswa/rotors_quad/Trial_Repo/drone_controller/src/drone_controller/models/spine.stl</uri>
+            <uri>/home/viswa_ns/sim/src/drone_controller/models/spine.stl</uri>
             <scale>0.001 0.001 0.001</scale>
           </mesh>
         </geometry>

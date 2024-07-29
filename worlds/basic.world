@@ -10,7 +10,7 @@
     </include>
 
     <include>
-      <uri>model:///home/viswa/rotors_quad/Trial_Repo/drone_controller/src/drone_controller/models</uri>
+      <uri>model:///home/viswa_ns/sim/src/drone_controller/models</uri>
       <name>ArtPark</name>
       <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
 
