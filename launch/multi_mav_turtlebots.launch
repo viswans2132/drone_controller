@@ -33,7 +33,7 @@
       <arg name="x" default="-1.045"/>
       <arg name="y" default="1.53"/>
       <arg name="z" default="0.28"/>
-      <arg name="color" value="Gazebo/BlueTransparent" />
+      <!-- <arg name="color" value="Gazebo/BlueTransparent" /> -->
     </include> 
 
     
@@ -55,7 +55,7 @@
       <arg name="x" default="-0.06"/>
       <arg name="y" default="-0.1"/>
       <arg name="z" default="0.28"/>
-      <arg name="color" value="Gazebo/GreenTransparent" />
+      <!-- <arg name="color" value="Gazebo/GreenTransparent" /> -->
     </include>     
       
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
